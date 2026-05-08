@@ -1,7 +1,7 @@
 class Voice2text < Formula
   desc "Push-to-talk voice transcription for macOS with local AI processing"
   homepage "https://github.com/thobai/voice2text"
-  url "https://github.com/thobai/voice2text.git", tag: "v0.1.0", revision: "f195ca7"
+  url "https://github.com/thobai/voice2text.git", tag: "v0.2.0", revision: "ce09580e7e838a5b59f15335fedbeddb768390da"
   license "MIT"
   head "https://github.com/thobai/voice2text.git", branch: "main"
 
