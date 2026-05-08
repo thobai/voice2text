@@ -3,3 +3,14 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Swift build
+.build/
+Voice2Text.app/
+Package.resolved
+
+# Binary framework (built locally)
+whisper.xcframework/
+
+# macOS
+.DS_Store
