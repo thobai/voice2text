@@ -5,7 +5,7 @@ class SetupWindow: NSWindow {
     private let setupState = SetupState()
 
     init() {
-        super.init(contentRect: NSRect(x: 0, y: 0, width: 400, height: 260),
+        super.init(contentRect: NSRect(x: 0, y: 0, width: 400, height: 280),
                    styleMask: [.titled, .closable],
                    backing: .buffered, defer: false)
         title = "Voice2Text Setup"
@@ -25,7 +25,7 @@ class SetupState: ObservableObject {
 }
 
 enum SetupStep {
-    case accessibility, downloadingWhisper, downloadingLLM, warmingUp, done
+    case accessibility, microphone, downloadingWhisper, downloadingLLM, warmingUp, done
 }
 
 struct SetupView: View {
@@ -41,7 +41,8 @@ struct SetupView: View {
                 .font(.title.bold())
 
             VStack(spacing: 8) {
-                stepRow("Accessibility Permission", done: state.step != .accessibility)
+                stepRow("Accessibility Permission", done: isPast(.accessibility), active: state.step == .accessibility)
+                stepRow("Microphone Permission", done: isPast(.microphone), active: state.step == .microphone)
                 stepRow("Downloading Whisper model (~1.5 GB)", done: isPast(.downloadingWhisper), active: state.step == .downloadingWhisper)
                 stepRow("Downloading LLM model (~1 GB)", done: isPast(.downloadingLLM), active: state.step == .downloadingLLM)
                 stepRow("Warming up…", done: state.step == .done, active: state.step == .warmingUp)
@@ -56,7 +57,7 @@ struct SetupView: View {
             }
         }
         .padding(30)
-        .frame(width: 400, height: 260)
+        .frame(width: 400, height: 280)
     }
 
     private func stepRow(_ text: String, done: Bool, active: Bool = false) -> some View {
@@ -75,7 +76,7 @@ struct SetupView: View {
     }
 
     private func isPast(_ step: SetupStep) -> Bool {
-        let order: [SetupStep] = [.accessibility, .downloadingWhisper, .downloadingLLM, .warmingUp, .done]
+        let order: [SetupStep] = [.accessibility, .microphone, .downloadingWhisper, .downloadingLLM, .warmingUp, .done]
         guard let current = order.firstIndex(of: state.step),
               let target = order.firstIndex(of: step) else { return false }
         return current > target

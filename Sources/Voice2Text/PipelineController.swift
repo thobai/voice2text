@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 private func log(_ msg: String) {
     let line = "[Voice2Text] \(msg)\n"
@@ -30,11 +31,12 @@ final class PipelineController {
         Task {
             log("setup() starting")
 
-            // Show setup window on first run (models not yet downloaded)
-            let needsDownload = !FileManager.default.fileExists(atPath: Config.whisperModelPath.path)
-            let setupWindow: SetupWindow? = needsDownload ? SetupWindow() : nil
+            let isFirstLaunch = !UserDefaults.standard.bool(forKey: "setupComplete")
+
+            // Show setup window on first launch
+            let setupWindow: SetupWindow? = isFirstLaunch ? SetupWindow() : nil
             if let setupWindow {
-                setupWindow.state.step = .downloadingWhisper
+                setupWindow.state.step = .accessibility
                 setupWindow.makeKeyAndOrderFront(nil)
                 NSApp.activate(ignoringOtherApps: true)
             }
@@ -53,11 +55,19 @@ final class PipelineController {
             log("hotkey setup: \(hotkeyOk)")
             guard hotkeyOk else {
                 log("hotkey setup FAILED - need accessibility permission")
-                overlay.show(state: .error("Grant Accessibility, then restart"))
-                try? await Task.sleep(nanoseconds: 10_000_000_000)
-                overlay.hide()
+                if setupWindow == nil {
+                    overlay.show(state: .error("Grant Accessibility, then restart"))
+                    try? await Task.sleep(nanoseconds: 10_000_000_000)
+                    overlay.hide()
+                }
                 return
             }
+
+            // Request microphone permission early
+            if let setupWindow { setupWindow.state.step = .microphone }
+            log("requesting microphone permission...")
+            let micGranted = await requestMicrophonePermission()
+            log("microphone permission: \(micGranted)")
 
             do {
                 log("ensuring whisper model...")
@@ -80,8 +90,7 @@ final class PipelineController {
 
                 if let setupWindow {
                     setupWindow.state.step = .done
-                    try? await Task.sleep(nanoseconds: 1_500_000_000)
-                    setupWindow.close()
+                    UserDefaults.standard.set(true, forKey: "setupComplete")
                 } else {
                     overlay.hide()
                 }
@@ -93,6 +102,14 @@ final class PipelineController {
                 overlay.show(state: .error("Download failed"))
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 overlay.hide()
+            }
+        }
+    }
+
+    private func requestMicrophonePermission() async -> Bool {
+        await withCheckedContinuation { cont in
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                cont.resume(returning: granted)
             }
         }
     }
