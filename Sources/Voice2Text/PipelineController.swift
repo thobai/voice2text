@@ -114,7 +114,7 @@ final class PipelineController {
             let t0 = CFAbsoluteTimeGetCurrent()
             overlay.show(state: .transcribing)
             log("transcribing \(audio.count) samples...")
-            var text = try await transcription.transcribe(audio: audio)
+            var text = try await transcription.transcribe(audio: audio, language: mode.language)
             let t1 = CFAbsoluteTimeGetCurrent()
             log("transcribed in \(String(format: "%.1f", t1-t0))s: \(text.prefix(80))")
             if mode != .raw {

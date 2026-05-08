@@ -6,9 +6,35 @@ enum ProcessingMode: String, CaseIterable {
     var systemPrompt: String? {
         switch self {
         case .raw: return nil
-        case .cleanup: return "Fix grammar, punctuation, and filler words. Do NOT translate. Keep the text in its original language. Output only the corrected text, nothing else."
+        case .cleanup: return """
+            Clean up the following transcribed speech for clarity and natural flow.
+            - Do NOT translate. Keep the text in its original language.
+            - Fix grammar, punctuation, and spelling.
+            - Remove filler words (um, uh, like, you know), stutters, and repetitions.
+            - Handle self-corrections: if the speaker says "sorry, I mean" or "actually" to correct themselves, keep only the corrected version.
+            - Write numbers as numerals (e.g., five → 5).
+            - Preserve the original meaning, tone, and intent.
+            - Output only the cleaned text, nothing else.
+            """
         case .translate: return "Translate the following German text to clean, grammatically correct English. Output only the translation."
         }
+    }
+
+    var defaultLanguage: String? {
+        switch self {
+        case .raw: return nil          // auto-detect
+        case .cleanup: return "en"     // assume English
+        case .translate: return "de"   // assume German input
+        }
+    }
+
+    /// Returns the configured language for this mode (user override or default)
+    var language: String? {
+        let key = "language_\(rawValue)"
+        if let stored = UserDefaults.standard.string(forKey: key) {
+            return stored == "auto" ? nil : stored
+        }
+        return defaultLanguage
     }
 
     var displayName: String {
@@ -18,6 +44,21 @@ enum ProcessingMode: String, CaseIterable {
         case .translate: return "Translate"
         }
     }
+
+    static let supportedLanguages: [(code: String, name: String)] = [
+        ("auto", "Auto-detect"),
+        ("en", "English"),
+        ("de", "German"),
+        ("fr", "French"),
+        ("es", "Spanish"),
+        ("it", "Italian"),
+        ("pt", "Portuguese"),
+        ("nl", "Dutch"),
+        ("ja", "Japanese"),
+        ("zh", "Chinese"),
+        ("ko", "Korean"),
+        ("ru", "Russian"),
+    ]
 }
 
 enum Config {

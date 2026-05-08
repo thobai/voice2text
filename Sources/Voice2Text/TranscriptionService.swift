@@ -17,7 +17,7 @@ class TranscriptionService {
         }
     }
 
-    func transcribe(audio: [Float]) async throws -> String {
+    func transcribe(audio: [Float], language: String? = nil) async throws -> String {
         try await ensureModel()
 
         if ctx == nil {
@@ -27,6 +27,7 @@ class TranscriptionService {
             guard ctx != nil else { throw TranscriptionError.modelLoadFailed }
         }
 
+        let lang = language
         return try await withCheckedThrowingContinuation { cont in
             DispatchQueue.global(qos: .userInitiated).async { [ctx] in
                 guard let ctx else {
@@ -38,10 +39,26 @@ class TranscriptionService {
                 params.print_progress = false
                 params.print_timestamps = false
                 params.translate = false
-                params.language = nil  // auto-detect language, do not translate
+                if let lang {
+                    lang.withCString { ptr in
+                        params.language = ptr
+                        // Must call whisper_full inside withCString so pointer is valid
+                    }
+                }
 
-                let result = audio.withUnsafeBufferPointer { buf in
-                    whisper_full(ctx, params, buf.baseAddress, Int32(audio.count))
+                let result: Int32
+                if let lang {
+                    result = lang.withCString { ptr in
+                        params.language = ptr
+                        return audio.withUnsafeBufferPointer { buf in
+                            whisper_full(ctx, params, buf.baseAddress, Int32(audio.count))
+                        }
+                    }
+                } else {
+                    params.language = nil
+                    result = audio.withUnsafeBufferPointer { buf in
+                        whisper_full(ctx, params, buf.baseAddress, Int32(audio.count))
+                    }
                 }
 
                 guard result == 0 else {
