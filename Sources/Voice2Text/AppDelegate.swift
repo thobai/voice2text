@@ -13,8 +13,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !trusted {
             let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
             AXIsProcessTrustedWithOptions(opts)
+            // Poll until granted
+            pollForAccessibility()
+        } else {
+            startPipeline()
         }
+    }
 
+    private func pollForAccessibility() {
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            if AXIsProcessTrusted() {
+                timer.invalidate()
+                DispatchQueue.main.async {
+                    self?.startPipeline()
+                }
+            }
+        }
+    }
+
+    @MainActor private func startPipeline() {
         let controller = PipelineController()
         controller.delegate = self
         pipeline = controller
