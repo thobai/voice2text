@@ -6,7 +6,7 @@ enum ProcessingMode: String, CaseIterable {
     var systemPrompt: String? {
         switch self {
         case .raw: return nil
-        case .cleanup: return "Fix grammar, punctuation, and filler words. Preserve the original language. Output only the corrected text."
+        case .cleanup: return "Fix grammar, punctuation, and filler words. Do NOT translate. Keep the text in its original language. Output only the corrected text, nothing else."
         case .translate: return "Translate the following German text to clean, grammatically correct English. Output only the translation."
         }
     }

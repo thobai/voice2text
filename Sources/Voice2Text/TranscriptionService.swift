@@ -37,6 +37,8 @@ class TranscriptionService {
                 params.n_threads = Int32(max(1, ProcessInfo.processInfo.activeProcessorCount - 2))
                 params.print_progress = false
                 params.print_timestamps = false
+                params.translate = false
+                params.language = nil  // auto-detect language, do not translate
 
                 let result = audio.withUnsafeBufferPointer { buf in
                     whisper_full(ctx, params, buf.baseAddress, Int32(audio.count))
