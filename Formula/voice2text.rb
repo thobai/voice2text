@@ -45,11 +45,11 @@ class Voice2text < Formula
       Voice2Text requires Accessibility permission for the global hotkey.
       Grant it in: System Settings > Privacy & Security > Accessibility
 
-      To start Voice2Text:
-        open #{prefix}/Voice2Text.app
+      Start as a background service (auto-launches on login):
+        brew services start voice2text
 
-      Or run directly (inherits terminal accessibility):
-        #{prefix}/Voice2Text.app/Contents/MacOS/Voice2Text &
+      Or start manually:
+        open #{prefix}/Voice2Text.app
 
       On first run, whisper and LLM models will be downloaded (~1.5GB).
 
