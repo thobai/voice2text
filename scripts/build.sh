@@ -18,6 +18,7 @@ mkdir -p "$BUNDLE_DIR/Contents/Resources"
 # Copy binary and Info.plist
 cp .build/release/Voice2Text "$BUNDLE_DIR/Contents/MacOS/Voice2Text"
 cp Resources/Info.plist "$BUNDLE_DIR/Contents/Info.plist"
+cp Resources/AppIcon.icns "$BUNDLE_DIR/Contents/Resources/AppIcon.icns"
 
 # Copy MLX metallib (required for GPU inference)
 MLX_METALLIB="$(python3 -c 'import mlx; import os; print(os.path.join(os.path.dirname(mlx.__file__), "lib", "mlx.metallib"))' 2>/dev/null || true)"
