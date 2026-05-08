@@ -30,6 +30,15 @@ final class PipelineController {
         Task {
             log("setup() starting")
 
+            // Show setup window on first run (models not yet downloaded)
+            let needsDownload = !FileManager.default.fileExists(atPath: Config.whisperModelPath.path)
+            let setupWindow: SetupWindow? = needsDownload ? SetupWindow() : nil
+            if let setupWindow {
+                setupWindow.state.step = .downloadingWhisper
+                setupWindow.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+            }
+
             log("setting up hotkey...")
             hotkey.onPress = { [weak self] mode in
                 log("hotkey press: \(mode)")
@@ -50,19 +59,37 @@ final class PipelineController {
                 return
             }
 
-            overlay.show(state: .downloading)
             do {
                 log("ensuring whisper model...")
+                if let setupWindow { setupWindow.state.step = .downloadingWhisper }
+                else { overlay.show(state: .downloading) }
                 try await transcription.ensureModel()
                 log("whisper model ready")
+
                 log("ensuring LLM model...")
+                if let setupWindow { setupWindow.state.step = .downloadingLLM }
                 try await llm.ensureModel()
                 log("LLM model ready")
-                overlay.hide()
+
+                // Warm up whisper (pre-compile Metal shaders)
+                log("warming up whisper...")
+                if let setupWindow { setupWindow.state.step = .warmingUp }
+                let silence = [Float](repeating: 0, count: 16000) // 1s of silence
+                _ = try? await transcription.transcribe(audio: silence, language: "en")
+                log("warm-up done")
+
+                if let setupWindow {
+                    setupWindow.state.step = .done
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    setupWindow.close()
+                } else {
+                    overlay.hide()
+                }
                 modelsReady = true
                 log("ready!")
             } catch {
                 log("download error: \(error)")
+                setupWindow?.close()
                 overlay.show(state: .error("Download failed"))
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 overlay.hide()
