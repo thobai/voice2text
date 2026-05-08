@@ -38,6 +38,7 @@ final class PipelineController {
             if let setupWindow {
                 setupWindow.state.step = .accessibility
                 setupWindow.makeKeyAndOrderFront(nil)
+                setupWindow.orderFrontRegardless()
                 NSApp.activate(ignoringOtherApps: true)
             }
 
@@ -64,7 +65,10 @@ final class PipelineController {
             }
 
             // Request microphone permission early
-            if let setupWindow { setupWindow.state.step = .microphone }
+            if let setupWindow {
+                setupWindow.state.step = .microphone
+                try? await Task.sleep(nanoseconds: 500_000_000) // let user see the window
+            }
             log("requesting microphone permission...")
             let micGranted = await requestMicrophonePermission()
             log("microphone permission: \(micGranted)")

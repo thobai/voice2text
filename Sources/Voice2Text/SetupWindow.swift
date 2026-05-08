@@ -10,6 +10,7 @@ class SetupWindow: NSWindow {
                    backing: .buffered, defer: false)
         title = "Voice2Text Setup"
         isReleasedWhenClosed = false
+        level = .floating
         center()
 
         let view = NSHostingView(rootView: SetupView(state: setupState))
