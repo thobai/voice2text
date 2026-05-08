@@ -4,9 +4,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var currentMode: ProcessingMode = .cleanup
     var pipeline: PipelineController?
+    var setupWindow: SetupWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusBar()
+
+        let isFirstLaunch = !UserDefaults.standard.bool(forKey: "setupComplete")
+        if isFirstLaunch {
+            setupWindow = SetupWindow()
+            setupWindow?.state.step = .accessibility
+            setupWindow?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
 
         // Prompt for accessibility if not trusted (required for global hotkey)
         let trusted = AXIsProcessTrusted()
@@ -34,6 +43,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor private func startPipeline() {
         let controller = PipelineController()
         controller.delegate = self
+        controller.setupWindow = setupWindow
         pipeline = controller
         controller.setup()
     }

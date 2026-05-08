@@ -26,21 +26,11 @@ final class PipelineController {
     private var activeMode: ProcessingMode = .cleanup
     private var modelsReady = false
     weak var delegate: AppDelegate?
+    var setupWindow: SetupWindow?
 
     func setup() {
         Task {
             log("setup() starting")
-
-            let isFirstLaunch = !UserDefaults.standard.bool(forKey: "setupComplete")
-
-            // Show setup window on first launch
-            let setupWindow: SetupWindow? = isFirstLaunch ? SetupWindow() : nil
-            if let setupWindow {
-                setupWindow.state.step = .accessibility
-                setupWindow.makeKeyAndOrderFront(nil)
-                setupWindow.orderFrontRegardless()
-                NSApp.activate(ignoringOtherApps: true)
-            }
 
             log("setting up hotkey...")
             hotkey.onPress = { [weak self] mode in
@@ -67,7 +57,7 @@ final class PipelineController {
             // Request microphone permission early
             if let setupWindow {
                 setupWindow.state.step = .microphone
-                try? await Task.sleep(nanoseconds: 500_000_000) // let user see the window
+                try? await Task.sleep(nanoseconds: 500_000_000)
             }
             log("requesting microphone permission...")
             let micGranted = await requestMicrophonePermission()
@@ -88,7 +78,7 @@ final class PipelineController {
                 // Warm up whisper (pre-compile Metal shaders)
                 log("warming up whisper...")
                 if let setupWindow { setupWindow.state.step = .warmingUp }
-                let silence = [Float](repeating: 0, count: 16000) // 1s of silence
+                let silence = [Float](repeating: 0, count: 16000)
                 _ = try? await transcription.transcribe(audio: silence, language: "en")
                 log("warm-up done")
 
