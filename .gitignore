@@ -12,5 +12,9 @@ Package.resolved
 # Binary framework (built locally)
 whisper.xcframework/
 
+# Release artifacts
+dist/
+
 # macOS
 .DS_Store
+dist/
