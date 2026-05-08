@@ -42,16 +42,27 @@ final class PipelineController {
                 DispatchQueue.main.async { self?.handleRelease() }
             }
 
-            let hotkeyOk = hotkey.setup()
+            var hotkeyOk = hotkey.setup()
             log("hotkey setup: \(hotkeyOk)")
-            guard hotkeyOk else {
+            if !hotkeyOk {
                 log("hotkey setup FAILED - need accessibility permission")
-                if setupWindow == nil {
-                    overlay.show(state: .error("Grant Accessibility, then restart"))
-                    try? await Task.sleep(nanoseconds: 10_000_000_000)
-                    overlay.hide()
+                if let setupWindow {
+                    setupWindow.state.step = .accessibility
+                    setupWindow.state.progress = "Remove Voice2Text from Accessibility, then re-add it."
+                } else {
+                    overlay.show(state: .error("Re-grant Accessibility"))
                 }
-                return
+                // Re-trigger the prompt
+                let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+                AXIsProcessTrustedWithOptions(opts)
+                // Poll until it actually works
+                while !hotkeyOk {
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    hotkeyOk = hotkey.setup()
+                }
+                log("hotkey setup succeeded after re-grant")
+                if setupWindow != nil { /* continue */ }
+                else { overlay.hide() }
             }
 
             // Request microphone permission early

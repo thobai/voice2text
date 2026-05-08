@@ -51,6 +51,12 @@ struct SetupView: View {
             if state.step != .done {
                 ProgressView()
                     .scaleEffect(0.8)
+                if !state.progress.isEmpty {
+                    Text(state.progress)
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                        .multilineTextAlignment(.center)
+                }
             } else {
                 Text("Ready! Use Right ⌘ to record.")
                     .foregroundColor(.secondary)
